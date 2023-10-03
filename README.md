@@ -1,10 +1,10 @@
 # TestSummaryReportGenerator
 
 
-### TestSummaryReportGenerator is a powerful Java-based utility designed to streamline the generation of comprehensive test summary reports from XML files.
+TestSummaryReportGenerator is a powerful Java-based utility designed to streamline the generation of comprehensive test summary reports from XML files.
 
 
-### Testing is a crucial part of software development, and keeping track of test results is essential for quality assurance. This tool aims to simplify the process of aggregating, analyzing, and presenting test case data in a structured and visually appealing format.
+Testing is a crucial part of software development, and keeping track of test results is essential for quality assurance. This tool aims to simplify the process of aggregating, analyzing, and presenting test case data in a structured and visually appealing format.
 
 
 # 🔑 Key Features:
