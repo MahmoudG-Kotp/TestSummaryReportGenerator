@@ -200,8 +200,7 @@ public class ReportBrowserGUI extends JFrame {
                 String outputLocationPath = outputLocationField.getText();
                 if (xmlFilePaths.size() > 0) {
                     ReportBrowserGUI main = new ReportBrowserGUI();
-                    // You can now use xmlFilePaths (List of selected XML file paths) and outputLocationPath to perform your logic.
-                    // Example:
+                    // You can now use xmlFilePaths (List of selected XML file paths) and outputLocationPath
                     System.out.println("Output Location: " + outputLocationPath);
                     ArrayList<ArrayList<TestCase>> allTCsLists = new ArrayList<>();
                     for (String xmlFilePath : xmlFilePaths) {
