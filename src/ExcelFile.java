@@ -6,17 +6,22 @@ import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.ss.util.CellReference;
 import org.apache.poi.xssf.usermodel.*;
 import org.jfree.chart.ChartFactory;
+import org.jfree.chart.ChartPanel;
 import org.jfree.chart.ChartUtilities;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.PiePlot3D;
 import org.jfree.chart.plot.RingPlot;
+import org.jfree.data.category.DefaultCategoryDataset;
 import org.jfree.data.general.DefaultPieDataset;
 import org.jfree.data.xy.XYSeriesCollection;
 import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTTable;
 import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTTableColumn;
 import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTTableColumns;
 
+import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.ByteArrayOutputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -85,13 +90,14 @@ public class ExcelFile {
         columns.setCount(columnsCount);
         int startCellIndex = Integer.parseInt(startCell.substring(1));
         XSSFRow headerRow = sheet.createRow(startCellIndex - 1);
+        String cellData;
         for (int columnCounter = 0; columnCounter < columnsCount; columnCounter++) {
             CTTableColumn column = columns.addNewTableColumn();
             column.setId(columnCounter);
             column.setName(columnsData.get(columnCounter));
 
             // Set the column width (adjustment based on columnCounter)
-            sheet.setColumnWidth(columnCounter, columnCounter > 0 ? 15000 / (columnCounter + 1) : 17000);
+            sheet.setColumnWidth(columnCounter, columnCounter > 0 ? 12000 / (columnCounter + 1) : 14000);
 
             // Set the column header cell value
             headerRow.createCell(columnCounter).setCellValue(columnsData.get(columnCounter));
@@ -100,7 +106,12 @@ public class ExcelFile {
             XSSFRow row = sheet.createRow(startCellIndex + rowCounter);
             for (int cellCounter = 0; cellCounter < columnsCount; cellCounter++) {
                 XSSFCell cell = row.createCell(cellCounter);
-                cell.setCellValue(cellsData.get(rowCounter).get(cellCounter));
+                cellData = cellsData.get(rowCounter).get(cellCounter);
+                if (cellData.contains("formula=")) {
+                    cell.setCellFormula(cellData.substring(8));
+                } else {
+                    cell.setCellValue(cellData);
+                }
             }
         }
     }
@@ -109,22 +120,13 @@ public class ExcelFile {
      * Creates a pie chart in the specified XSSFSheet with the given results.
      *
      * @param chartSheet The XSSFSheet in which to create the pie chart.
-     * @param results    An Integer array containing counts of "Pass," "Fail," and "Inconclusive" test results.
      */
-    public void createTCsChart(XSSFSheet chartSheet, Integer[] results) {
+    public void createTCsChart(XSSFSheet chartSheet) {
         DefaultPieDataset dataset = new DefaultPieDataset();
+
         final String PASS_CATEGORY_NAME = "Pass",
                 FAIL_CATEGORY_NAME = "Fail",
                 INCONCLUSIVE_CATEGORY_NAME = "Inconclusive";
-
-        if (results[0] > 0)
-            dataset.setValue(PASS_CATEGORY_NAME, results[0]);
-
-        if (results[1] > 0)
-            dataset.setValue(FAIL_CATEGORY_NAME, results[1]);
-
-        if (results[2] > 0)
-            dataset.setValue(INCONCLUSIVE_CATEGORY_NAME, results[2]);
 
         JFreeChart chart = ChartFactory.createPieChart3D(
                 "Test Cases Chart",
@@ -133,6 +135,16 @@ public class ExcelFile {
                 true,
                 false
         );
+        FormulaEvaluator evaluator = chartSheet.getWorkbook().getCreationHelper().createFormulaEvaluator();
+        // Update the dataset with new data
+        int passCount = (int) evaluator.evaluate(chartSheet.getRow(1).getCell(1)).getNumberValue();
+        int failCount = (int) evaluator.evaluate(chartSheet.getRow(2).getCell(1)).getNumberValue();
+        int inconclusiveCount = (int) evaluator.evaluate(chartSheet.getRow(3).getCell(1)).getNumberValue();
+
+        dataset.setValue(PASS_CATEGORY_NAME, passCount);
+        dataset.setValue(FAIL_CATEGORY_NAME, failCount);
+        dataset.setValue(INCONCLUSIVE_CATEGORY_NAME, inconclusiveCount);
+
         PiePlot3D chartPlot = (PiePlot3D) chart.getPlot();
         chartPlot.setBackgroundPaint(Color.WHITE);
         chartPlot.setSectionPaint(PASS_CATEGORY_NAME, new Color(50, 182, 135));

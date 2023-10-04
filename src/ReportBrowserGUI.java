@@ -34,13 +34,7 @@ public class ReportBrowserGUI extends JFrame {
         ArrayList<TestCase> tcList = new ArrayList<>();
         for (Element element : xmlFile.getNodeElementsListByTagName("testcase")) {
             // Extract data and create a TestCase object
-            tcList.add(
-                    new TestCase(
-                            element.getElementsByTagName("title").item(0).getTextContent(),
-                            ((Element) element.getElementsByTagName("verdict").item(0)).getAttribute("time"),
-                            ((Element) element.getElementsByTagName("verdict").item(0)).getAttribute("result")
-                    )
-            );
+            tcList.add(new TestCase(element.getElementsByTagName("title").item(0).getTextContent(), ((Element) element.getElementsByTagName("verdict").item(0)).getAttribute("time"), ((Element) element.getElementsByTagName("verdict").item(0)).getAttribute("result")));
         }
         return tcList;
     }
@@ -53,9 +47,7 @@ public class ReportBrowserGUI extends JFrame {
     private void printTestCasesList(ArrayList<TestCase> testCaseList) {
         for (TestCase testCase : testCaseList) {
             // Print test case details
-            System.out.println("Title: " + testCase.getTitle()
-                    + "\nTime: " + testCase.getStartTime()
-                    + "\nResult: " + testCase.getResult() + "\n\n");
+            System.out.println("Title: " + testCase.getTitle() + "\nTime: " + testCase.getStartTime() + "\nResult: " + testCase.getResult() + "\n\n");
         }
     }
 
@@ -77,28 +69,6 @@ public class ReportBrowserGUI extends JFrame {
             }
         }
         return rowDataList;
-    }
-
-    /**
-     * Calculates the number of test cases with different results from a list of test case lists.
-     *
-     * @param allTCsLists An ArrayList of ArrayLists of TestCase objects.
-     * @return An Integer array containing counts of "Pass," "Fail," and "Inconclusive" test results.
-     */
-    private Integer[] getTCListResults(ArrayList<ArrayList<TestCase>> allTCsLists) {
-        Integer[] resultArray = {0, 0, 0};
-        for (ArrayList<TestCase> tcList : allTCsLists) {
-            for (TestCase testCase : tcList) {
-                // Count test case results
-                if (testCase.getResult().equalsIgnoreCase("Pass"))
-                    resultArray[0]++;
-                else if (testCase.getResult().equalsIgnoreCase("Fail"))
-                    resultArray[1]++;
-                else if (testCase.getResult().equalsIgnoreCase("Inconclusive"))
-                    resultArray[2]++;
-            }
-        }
-        return resultArray;
     }
 
     /**
@@ -246,30 +216,39 @@ public class ReportBrowserGUI extends JFrame {
                     ExcelFile reportExcelFile;
                     if (outputLocationPath != null)
                         reportExcelFile = new ExcelFile(outputLocationPath + "/", "Test Summary Report");
-                    else
-                        reportExcelFile = new ExcelFile("test_excel_reports/", "Test Summary Report");
+                    else reportExcelFile = new ExcelFile("test_excel_reports/", "Test Summary Report");
 
                     XSSFSheet testCasesTableSheet = reportExcelFile.createSheet("Test Cases Table");
-                    reportExcelFile.createTable(
-                            testCasesTableSheet,
-                            "*Test Summary Table*",
-                            "A1",
-                            "C" + innerListsSize,
-                            3,
-                            new ArrayList<>() {{
-                                //Columns Data
-                                add("Title");
-                                add("Time");
-                                add("Result");
-                            }},
-                            innerListsSize,
-                            main.convertTCListToRowData(allTCsLists)
-                    );
+                    reportExcelFile.createTable(testCasesTableSheet, "*Test Cases Table*", "A1", "C" + innerListsSize, 3, new ArrayList<>() {{
+                        //Columns Data
+                        add("Title");
+                        add("Time");
+                        add("Result");
+                    }}, innerListsSize, main.convertTCListToRowData(allTCsLists));
 
-                    reportExcelFile.createTCsChart(
-                            reportExcelFile.createSheet("Summary"),
-                            main.getTCListResults(allTCsLists)
-                    );
+                    ArrayList<ArrayList<String>> chartTableData = new ArrayList<>();
+                    chartTableData.add(new ArrayList<>() {{
+                        add("Pass");
+                        add("formula=COUNTIF('" + testCasesTableSheet.getSheetName() + "'!C:C, \"pass\")");
+                    }});
+
+                    chartTableData.add(new ArrayList<>() {{
+                        add("Fail");
+                        add("formula=COUNTIF('" + testCasesTableSheet.getSheetName() + "'!C:C, \"fail\")");
+                    }});
+
+                    chartTableData.add(new ArrayList<>() {{
+                        add("Inconclusive");
+                        add("formula=COUNTIF('" + testCasesTableSheet.getSheetName() + "'!C:C, \"inconclusive\")");
+                    }});
+
+                    XSSFSheet chartSheet = reportExcelFile.createSheet("Summary");
+                    reportExcelFile.createTable(chartSheet, "*Test Summary Table*", "A1", "B3", 2, new ArrayList<>() {{
+                        add("Result");
+                        add("Count");
+                    }}, 3, chartTableData);
+
+                    reportExcelFile.createTCsChart(chartSheet);
                     reportExcelFile.createFile();
                     JOptionPane.showMessageDialog(null, "File created successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
                 }
